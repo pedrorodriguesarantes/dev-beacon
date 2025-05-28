@@ -41,6 +41,10 @@ def count_by_period(df, col, start, end):
     return df[in_range(df[col].dt.date, start, end)].shape[0]
 
 def rolling_avg_first_answer(times, points, period):
+    if not times:
+        print(f"[Warning] No data available for first answer calculation in period '{period}'.")
+        return [np.nan] * len(points)
+
     avg_times = []
     for i, end in enumerate(points):
         if period == "day":
@@ -49,24 +53,29 @@ def rolling_avg_first_answer(times, points, period):
             start = end - timedelta(weeks=1)
         elif period == "month":
             if i == 0:
-                start = min(row['first_answer_at'] for row in times) - timedelta(seconds=1)
+                try:
+                    start = min(row['first_answer_at'] for row in times) - timedelta(seconds=1)
+                except ValueError:
+                    print(f"[Warning] No 'first_answer_at' timestamps for period '{period}'.")
+                    start = end - timedelta(days=30)  # Fallback: arbitrary 30-day window
             else:
                 start = points[i - 1]
         else:
             raise ValueError("period must be 'day', 'week', or 'month'")
-        
+
         valid_prs = [row for row in times if start < row['first_answer_at'] <= end]
         if valid_prs:
-            if period == "day":
-                avg = np.mean([row['time_to_first_answer_hours'] for row in valid_prs])
-            else:
-                avg = np.mean([row['time_to_first_answer_hours'] / 24 for row in valid_prs])
+            avg = np.mean([row['time_to_first_answer_hours'] if period == "day" else row['time_to_first_answer_hours'] / 24 for row in valid_prs])
         else:
             avg = np.nan
         avg_times.append(avg)
     return avg_times
 
 def rolling_avg_time_to_close(times, points, period):
+    if not times:
+        print(f"[Warning] No data available for time to close calculation in period '{period}'.")
+        return [np.nan] * len(points)
+
     avg_times = []
     for i, end in enumerate(points):
         if period == "day":
@@ -75,18 +84,19 @@ def rolling_avg_time_to_close(times, points, period):
             start = end - timedelta(weeks=1)
         elif period == "month":
             if i == 0:
-                start = min(row['closed_at'] for row in times) - timedelta(seconds=1)
+                try:
+                    start = min(row['closed_at'] for row in times) - timedelta(seconds=1)
+                except ValueError:
+                    print(f"[Warning] No 'closed_at' timestamps for period '{period}'.")
+                    start = end - timedelta(days=30)  # Fallback: arbitrary 30-day window
             else:
                 start = points[i - 1]
         else:
             raise ValueError("period must be 'day', 'week', or 'month'")
-        
+
         valid_prs = [row for row in times if start < row['closed_at'] <= end]
         if valid_prs:
-            if period == "day":
-                avg = np.mean([row['time_to_close_hours'] for row in valid_prs])
-            else:
-                avg = np.mean([row['time_to_close_hours'] / 24 for row in valid_prs])
+            avg = np.mean([row['time_to_close_hours'] if period == "day" else row['time_to_close_hours'] / 24 for row in valid_prs])
         else:
             avg = np.nan
         avg_times.append(avg)
