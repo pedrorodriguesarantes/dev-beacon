@@ -101,3 +101,15 @@ def rolling_avg_time_to_close(times, points, period):
             avg = np.nan
         avg_times.append(avg)
     return avg_times
+
+
+def period_merge_rate(pulls_df, mask) -> float:
+        """
+        mask → boolean Series over pulls_df.
+        Returns % of those PRs (closed in period) that were merged, 2 decimals.
+        """
+        closed_cnt = mask.sum()
+        if closed_cnt == 0:
+            return 0.0
+        merged_cnt = pulls_df.loc[mask, "merged_at"].notna().sum()
+        return round((merged_cnt / closed_cnt) * 100, 2)

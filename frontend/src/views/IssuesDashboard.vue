@@ -51,12 +51,14 @@
             title="Total Opened Issues"
             :value="issuesData[`${frameLocal}_opened_last`] ?? 0"
             :trend="issuesData[`trend_opened_${frameLocal}`] ?? 0"
+            :valueBefore="issuesData[`${frameLocal}_opened_prev`] ?? 0"
           />
 
           <MetricCard
             title="Total Closed Issues"
             :value="issuesData[`${frameLocal}_closed_last`] ?? 0"
             :trend="issuesData[`trend_closed_${frameLocal}`] ?? 0"
+            :valueBefore="issuesData[`${frameLocal}_closed_prev`] ?? 0"
           />
         </div>
 
@@ -134,6 +136,7 @@ const initialized = ref(false);
 onMounted(async () => {
   try {
     const response = await axios.get(`https://raw.githubusercontent.com/pedrorodriguesarantes/dev-beacon/main/metrics/${owner.toLowerCase()}/${repo.toLowerCase()}/issuesAnalysis.json`);
+    //const response = await axios.get('/issuesAnalysis.json');
     issuesData.value = response.data;
 
     const res = await fetch('/repositories.json');

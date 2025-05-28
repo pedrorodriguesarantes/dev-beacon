@@ -6,7 +6,7 @@
         <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
           <path v-if="trend >= 0" d="M4 12l6 6 10-14"/><path v-else d="M20 12l-6-6-10 14"/>
         </svg>
-        (Δ-1) to (Δ) {{ (trend * 100).toFixed(2) }}%
+        {{ valueBefore }} ({{ (trend * 100).toFixed(2) }}%)  (Δ-1)
       </span>
     </div>
   </template>
@@ -15,6 +15,7 @@
   defineProps({
     title: String,
     value: [Number, String],
-    trend: Number
+    trend: Number,
+    valueBefore: [Number, String]
   });
   </script>

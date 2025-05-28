@@ -37,13 +37,13 @@ def processProductivityIS(org_name: str, repo_name: str) -> None:
         results[f"{period}_closed_last"] = count_by_period(issues_df, 'closed_at', last_start, last_end)
         results[f"{period}_closed_prev"] = count_by_period(issues_df, 'closed_at', prev_start, prev_end)
 
-    results['trend_opened_day'] = safe_divide(results['day_opened_prev'], results['day_opened_last'], 2)
-    results['trend_opened_week'] = safe_divide(results['week_opened_prev'], results['week_opened_last'], 2)
-    results['trend_opened_month'] = safe_divide(results['month_opened_prev'], results['month_opened_last'], 2)
+    results['trend_opened_day'] = safe_divide(results['day_opened_last'], results['day_opened_prev'], 2) - 1
+    results['trend_opened_week'] = safe_divide(results['week_opened_last'], results['week_opened_prev'], 2) - 1
+    results['trend_opened_month'] = safe_divide(results['month_opened_last'], results['month_opened_prev'], 2) - 1
 
-    results['trend_closed_day'] = safe_divide(results['day_closed_prev'], results['day_closed_last'], 2)
-    results['trend_closed_week'] = safe_divide(results['week_closed_prev'], results['week_closed_last'], 2)
-    results['trend_closed_month'] = safe_divide(results['month_closed_prev'], results['month_closed_last'], 2)
+    results['trend_closed_day'] = safe_divide(results['day_closed_last'], results['day_closed_prev'], 2) - 1
+    results['trend_closed_week'] = safe_divide(results['week_closed_last'], results['week_closed_prev'], 2) - 1
+    results['trend_closed_month'] = safe_divide(results['month_closed_last'], results['month_closed_prev'], 2) - 1
 
     day_points = [
         datetime.combine((now.date() - timedelta(days=delta)), datetime.max.time(), tzinfo=timezone.utc)
@@ -216,8 +216,7 @@ def processProductivityIS(org_name: str, repo_name: str) -> None:
     nested_dir = out_dir / f'{org_name}/{repo_name}'
     nested_dir.mkdir(parents=True, exist_ok=True)
     output_path = nested_dir / 'issuesAnalysis.json'
-
-    print(output_path)
+    
     with open(output_path, 'w', encoding='utf-8') as f:
         json.dump(results, f, indent=2, default=str)
 

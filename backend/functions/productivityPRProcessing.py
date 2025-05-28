@@ -23,11 +23,9 @@ def processProductivityPR(org_name: str, repo_name: str) -> None:
 
     pulls_df['created_at'] = pd.to_datetime(pulls_df['created_at'], utc=True, errors='coerce')
     pulls_df['closed_at']  = pd.to_datetime(pulls_df['closed_at'], utc=True, errors='coerce')
-
+    pulls_df['merged_at'] = pd.to_datetime(pulls_df['merged_at'], utc=True, errors='coerce')
+    
     now = datetime.now(timezone.utc)
-
-    total_opened = pulls_df['created_at'].notna().sum()
-    total_closed = pulls_df['closed_at'].notna().sum()
 
     results = {}
 
@@ -37,14 +35,24 @@ def processProductivityPR(org_name: str, repo_name: str) -> None:
         results[f"{period}_opened_prev"] = count_by_period(pulls_df, 'created_at', prev_start, prev_end)
         results[f"{period}_closed_last"] = count_by_period(pulls_df, 'closed_at', last_start, last_end)
         results[f"{period}_closed_prev"] = count_by_period(pulls_df, 'closed_at', prev_start, prev_end)
+        results[f"{period}_merged_last"] = count_by_period(pulls_df, "merged_at", last_start, last_end)
+        results[f"{period}_merged_prev"] = count_by_period(pulls_df, "merged_at", prev_start, prev_end)
+    
+    results[f"merge_rate_day_last"] = round(safe_divide(results[f"day_merged_last"], results[f"day_closed_last"], 4) * 100, 2) - 1
+    results[f"merge_rate_week_last"] = round(safe_divide(results[f"week_merged_last"], results[f"week_closed_last"], 4) * 100, 2) - 1
+    results[f"merge_rate_month_last"] = round(safe_divide(results[f"month_merged_last"], results[f"month_closed_last"], 4) * 100, 2) - 1
+    
+    results[f"merge_rate_day_prev"] = round(safe_divide(results[f"day_merged_prev"], results[f"day_closed_prev"], 4) * 100, 2) - 1
+    results[f"merge_rate_week_prev"] = round(safe_divide(results[f"week_merged_prev"], results[f"week_closed_prev"], 4) * 100, 2) - 1
+    results[f"merge_rate_month_prev"] = round(safe_divide(results[f"month_merged_prev"], results[f"month_closed_prev"], 4) * 100, 2) - 1
 
-    results['trend_opened_day'] = safe_divide(results['day_opened_prev'], results['day_opened_last'], 2)
-    results['trend_opened_week'] = safe_divide(results['week_opened_prev'], results['week_opened_last'], 2)
-    results['trend_opened_month'] = safe_divide(results['month_opened_prev'], results['month_opened_last'], 2)
-
-    results['trend_closed_day'] = safe_divide(results['day_closed_prev'], results['day_closed_last'], 2)
-    results['trend_closed_week'] = safe_divide(results['week_closed_prev'], results['week_closed_last'], 2)
-    results['trend_closed_month'] = safe_divide(results['month_closed_prev'], results['month_closed_last'], 2)
+    results['trend_opened_day'] = safe_divide(results['day_opened_last'], results['day_opened_prev'], 2) - 1
+    results['trend_opened_week'] = safe_divide(results['week_opened_last'], results['week_opened_prev'], 2) - 1
+    results['trend_opened_month'] = safe_divide(results['month_opened_last'], results['month_opened_prev'], 2) - 1
+    
+    results['trend_closed_day'] = safe_divide(results['day_closed_last'], results['day_closed_prev'], 2) - 1
+    results['trend_closed_week'] = safe_divide(results['week_closed_last'], results['week_closed_prev'], 2) - 1
+    results['trend_closed_month'] = safe_divide(results['month_closed_last'], results['month_closed_prev'], 2) - 1
 
     day_points = [
         datetime.combine((now.date() - timedelta(days=delta)), datetime.max.time(), tzinfo=timezone.utc)
@@ -210,6 +218,31 @@ def processProductivityPR(org_name: str, repo_name: str) -> None:
 
     time_to_close_month = [{"y": v, "x": month_points[c].strftime("%Y-%m")} for c, v in enumerate(avg_close_month)]
     results['time_to_close_month'] = time_to_close_month
+
+    merge_rate_day = []
+    for end in day_points:
+        start = end.replace(hour=0, minute=0, second=0, microsecond=0)
+        mask  = (pulls_df["closed_at"] >= start) & (pulls_df["closed_at"] <= end)
+        merge_rate_day.append({"y": period_merge_rate(pulls_df, mask), "x": start.strftime("%Y-%m-%d")})
+
+    merge_rate_week = []
+    for end in week_points:
+        start = end - timedelta(days=6)
+        mask  = (pulls_df["closed_at"] >= start) & (pulls_df["closed_at"] <= end)
+        merge_rate_week.append({"y": period_merge_rate(pulls_df, mask), "x": start.strftime("%Y-%m-%d")})
+
+    merge_rate_month = []
+    for end in month_points:
+        start = end.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        mask  = (pulls_df["closed_at"] >= start) & (pulls_df["closed_at"] <= end)
+        merge_rate_month.append({"y": period_merge_rate(pulls_df, mask), "x": start.strftime("%Y-%m")})
+    
+    results["merge_rate_by_day"] = merge_rate_day
+    results["merge_rate_by_week"] = merge_rate_week
+    results["merge_rate_by_month"] = merge_rate_month
+    results["trend_merged_day"] = safe_divide(results["day_merged_last"], results["day_merged_prev"], 2) - 1
+    results["trend_merged_week"] = safe_divide(results["week_merged_last"], results["week_merged_prev"], 2) - 1
+    results["trend_merged_month"] = safe_divide(results["month_merged_last"], results["month_merged_prev"], 2) - 1
 
     out_dir = Path(__file__).resolve().parents[2] / "./metrics"
     out_dir.mkdir(exist_ok=True)

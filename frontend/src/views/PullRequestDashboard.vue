@@ -51,12 +51,21 @@
             title="Total Opened PRs"
             :value="pullRequestData[`${frameLocal}_opened_last`] ?? 0"
             :trend="pullRequestData[`trend_opened_${frameLocal}`] ?? 0"
+            :valueBefore="pullRequestData[`${frameLocal}_opened_prev`]"
           />
 
           <MetricCard
             title="Total Closed PRs"
             :value="pullRequestData[`${frameLocal}_closed_last`] ?? 0"
             :trend="pullRequestData[`trend_closed_${frameLocal}`] ?? 0"
+            :valueBefore="pullRequestData[`${frameLocal}_closed_prev`]"
+          />
+
+          <MetricCard
+            title="Total Merged PRs"
+            :value="pullRequestData[`${frameLocal}_merged_last`] ?? 0"
+            :trend="pullRequestData[`trend_merged_${frameLocal}`] ?? 0"
+            :valueBefore="pullRequestData[`${frameLocal}_merged_prev`]"
           />
         </div>
 
@@ -89,8 +98,14 @@
             :series="pullRequestData[`time_to_close_${frameLocal}`]"
           />
         </div>
-      </section>
 
+        <div class="bg-white rounded-2xl p-4 shadow">
+          <h3 class="font-semibold text-gray-700">Merge Rate (%)</h3>
+          <TimeframeToggle v-model="frameLocal" />
+          <LineChart :series="pullRequestData[`merge_rate_by_${frameLocal}`]" />
+        </div>
+      </section>
+        
       <section v-else class="text-gray-400 p-8">
         Loading PR data for <strong>{{ owner }}/{{ repo }}</strong>...
       </section>
@@ -134,6 +149,7 @@ const initialized = ref(false);
 onMounted(async () => {
   try {
     const response = await axios.get(`https://raw.githubusercontent.com/pedrorodriguesarantes/dev-beacon/main/metrics/${owner.toLowerCase()}/${repo.toLowerCase()}/pullRequestAnalysis.json`);
+    //const response = await axios.get('/pullRequestAnalysis.json');
     pullRequestData.value = response.data;
 
     const res = await fetch('/repositories.json');
