@@ -1,0 +1,5 @@
+argparse
+pandas
+PyGithub>=2.3
+dotenv
+openpyxl
