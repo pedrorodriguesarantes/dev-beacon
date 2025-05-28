@@ -1,0 +1,87 @@
+[
+    {
+      "slug": "data-table",
+      "name": "data.table",
+      "category": "Analytics",
+      "description": "High‑performance extension of R data.frames that offers fast aggregation and joins.",
+      "image": "https://avatars.githubusercontent.com/u/7824179?s=200&v=4",
+      "github": "https://github.com/Rdatatable/data.table",
+        "labels": [
+        { "icon": "dot", "text": "R", "color": "#2274F2" },
+        { "icon": "dot", "text": "Public", "color": "#FFFFFF"}
+      ]
+    },
+    {
+      "slug": "jabref",
+      "name": "JabRef",
+      "category": "Reference Management",
+      "description": "Open-source bibliography reference manager based on BibTeX, providing easy organization, searching, and citation management for LaTeX documents.",
+      "image": "https://avatars.githubusercontent.com/u/5033446?s=200&v=4",
+      "github": "https://github.com/JabRef/jabref",
+      "labels": [
+        { "icon": "dot", "text": "Java", "color": "#5382A1" },
+        { "icon": "dot", "text": "Public", "color": "#FFFFFF" }
+      ]
+    },
+    {
+      "slug": "pandas",
+      "name": "pandas",
+      "category": "Analytics",
+      "description": "Powerful Python library for data manipulation and analysis, offering data structures like DataFrames and tools for handling structured data efficiently.",
+      "image": "https://avatars.githubusercontent.com/u/21206976?s=200&v=4",
+      "github": "https://github.com/pandas-dev/pandas",
+      "labels": [
+        { "icon": "dot", "text": "Python", "color": "#3572A5" },
+        { "icon": "dot", "text": "Public", "color": "#FFFFFF" }
+      ]
+    },
+    {
+      "slug": "matplotlib",
+      "name": "matplotlib",
+      "category": "Visualization",
+      "description": "Comprehensive 2D and 3D plotting library for Python, enabling users to generate high-quality visualizations for data exploration and presentation.",
+      "image": "https://avatars.githubusercontent.com/u/215947?s=200&v=4",
+      "github": "https://github.com/matplotlib/matplotlib",
+      "labels": [
+        { "icon": "dot", "text": "Python", "color": "#3572A5" },
+        { "icon": "dot", "text": "Public", "color": "#FFFFFF" }
+      ]
+    },
+    {
+      "slug": "nextjs",
+      "name": "Next.js",
+      "category": "Web Development",
+      "description": "React framework for server-side rendering, static site generation, and building fast web applications with optimized performance.",
+      "image": "https://avatars.githubusercontent.com/u/14985020?s=200&v=4",
+      "github": "https://github.com/vercel/next.js",
+      "labels": [
+        { "icon": "dot", "text": "JavaScript", "color": "#F7DF1E" },
+        { "icon": "dot", "text": "Public", "color": "#FFFFFF" }
+      ]
+    },
+    {
+      "slug": "kubernetes",
+      "name": "Kubernetes",
+      "category": "DevOps",
+      "description": "Powerful open-source container orchestration platform for automating deployment, scaling, and management of containerized applications at scale.",
+      "image": "https://avatars.githubusercontent.com/u/13629408?s=200&v=4",
+      "github": "https://github.com/kubernetes/kubernetes",
+      "labels": [
+        { "icon": "dot", "text": "Go", "color": "#00ADD8" },
+        { "icon": "dot", "text": "Public", "color": "#FFFFFF" }
+      ]
+    },
+    {
+      "slug": "numpy",
+      "name": "NumPy",
+      "category": "Analytics",
+      "description": "Fundamental package for scientific computing with Python, providing support for arrays, matrices, and high-level mathematical functions essential for numerical analysis.",
+      "image": "https://avatars.githubusercontent.com/u/288276?s=200&v=4",
+      "github": "https://github.com/numpy/numpy",
+      "labels": [
+        { "icon": "dot", "text": "Python", "color": "#3572A5" },
+        { "icon": "dot", "text": "Public", "color": "#FFFFFF" }
+      ]
+    }
+      
+]

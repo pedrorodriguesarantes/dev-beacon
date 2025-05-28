@@ -1,0 +1,8 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* optional: smooth card shadows */
+.shadow {
+  @apply shadow-sm hover:shadow-md transition-shadow;
+}
