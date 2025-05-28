@@ -208,7 +208,7 @@ def processProductivityPR(org_name: str, repo_name: str) -> None:
     time_to_close_month = [{"y": v, "x": month_points[c].strftime("%Y-%m")} for c, v in enumerate(avg_close_month)]
     results['time_to_close_month'] = time_to_close_month
 
-    out_dir = Path(__file__).resolve().parents[1] / "./metrics"
+    out_dir = Path(__file__).resolve().parents[2] / "./metrics"
     out_dir.mkdir(exist_ok=True)
     
     nested_dir = out_dir / f'{org_name}/{repo_name}'

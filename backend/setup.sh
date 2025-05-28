@@ -19,7 +19,7 @@ if [[ ! -d $VENV_DIR ]]; then
   "$PYTHON" -m venv "$VENV_DIR"
   echo "  • virtual‑env created in $VENV_DIR/"
 fi
-''
+
 # 3. install / update dependencies
 source "$VENV_DIR/bin/activate"
 pip install --quiet --upgrade pip

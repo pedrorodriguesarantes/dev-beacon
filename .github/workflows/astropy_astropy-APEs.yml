@@ -1,0 +1,44 @@
+name: Generate Metrics and Commit for astropy (owner) astropy-APES (project)
+
+env:
+  API_KEY: ${{ secrets.API_KEY }}
+
+on:
+  schedule:
+    - cron: '0 0 * * 0'  # Runs every Sunday at midnight UTC
+  workflow_dispatch:      # Allows manual trigger from Actions tab
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r backend/requirements.txt
+
+    - name: Run Extraction Scripts
+      run: |
+        cd backend/functions
+        python issueExtractor.py astropy astropy-APES $API_KEY
+        python pullRequestExtractor.py astropy astropy-APES $API_KEY
+        python milestoneExtractor.py astropy astropy-APES $API_KEY
+        python productivityISProcessing.py astropy astropy-apes
+        python productivityPRProcessing.py astropy astropy-apes
+
+    - name: Commit and Push Results
+      run: |
+        git config --global user.name "GitHub Actions Bot"
+        git config --global user.email "pedrorodriguesarantes@gmail.com"
+        git add metrics_output
+        git commit -m "Update metrics JSON metrics for astropy (org) astropy-apes (project) [skip ci]" || echo "No changes to commit"
+        git push
