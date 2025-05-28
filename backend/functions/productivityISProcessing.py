@@ -15,8 +15,11 @@ from utils.dataProcessing import *
 from pathlib import Path
 
 def processProductivityIS(org_name: str, repo_name: str) -> None:
-    issues_df = pd.read_excel(f'./files/{org_name}_{repo_name}_issues.xlsx')
-    comments_df = pd.read_excel(f'./files/{org_name}_{repo_name}_issues_comments.xlsx')
+    base_dir = Path(__file__).resolve().parents[1] 
+    files_dir = base_dir / "files"
+
+    issues_df = pd.read_excel(files_dir / f"{org_name.lower()}_{repo_name.lower()}_issues.xlsx")
+    comments_df = pd.read_excel(files_dir / f"{org_name.lower()}_{repo_name.lower()}_issues_comments.xlsx")
 
     issues_df['created_at'] = pd.to_datetime(issues_df['created_at'], utc=True, errors='coerce')
     issues_df['closed_at']  = pd.to_datetime(issues_df['closed_at'], utc=True, errors='coerce')

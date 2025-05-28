@@ -32,6 +32,15 @@ jobs:
         python issueExtractor.py astropy astropy-APES $API_KEY
         python pullRequestExtractor.py astropy astropy-APES $API_KEY
         python milestoneExtractor.py astropy astropy-APES $API_KEY
+
+    - name: List files in metrics folder
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y tree
+        tree -L 3   # Adjust depth with -L
+
+    - name: Run Processing Scripts
+      run: |
         python productivityISProcessing.py astropy astropy-apes
         python productivityPRProcessing.py astropy astropy-apes
 
@@ -39,6 +48,6 @@ jobs:
       run: |
         git config --global user.name "GitHub Actions Bot"
         git config --global user.email "pedrorodriguesarantes@gmail.com"
-        git add metrics_output
+        git add metrics
         git commit -m "Update metrics JSON metrics for astropy (org) astropy-apes (project) [skip ci]" || echo "No changes to commit"
         git push

@@ -15,8 +15,11 @@ from utils.dataProcessing import *
 from pathlib import Path
 
 def processProductivityPR(org_name: str, repo_name: str) -> None:
-    pulls_df = pd.read_excel(f'./files/{org_name}_{repo_name}_pulls.xlsx')
-    comments_df = pd.read_excel(f'./files/{org_name}_{repo_name}_pulls_comments.xlsx')
+    base_dir = Path(__file__).resolve().parents[1] 
+    files_dir = base_dir / "files"
+
+    pulls_df = pd.read_excel(files_dir / f"{org_name.lower()}_{repo_name.lower()}_pulls.xlsx")
+    comments_df = pd.read_excel(files_dir / f"{org_name.lower()}_{repo_name.lower()}_pulls_comments.xlsx")
 
     pulls_df['created_at'] = pd.to_datetime(pulls_df['created_at'], utc=True, errors='coerce')
     pulls_df['closed_at']  = pd.to_datetime(pulls_df['closed_at'], utc=True, errors='coerce')
