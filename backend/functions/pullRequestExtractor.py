@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-usage: python pullRequestExtractor.py ORG REPO API_KEY
+usage: python pullRequestExtractor.py ORG REPO API_KEY, MIN_PULL, MAX_PULL
 """
 
 import argparse
@@ -14,13 +14,20 @@ from github import Github
 from utils.dataCleaning import *
 from pathlib import Path
 
-def extract_pulls(org_name: str, repo_name: str, api_key: str) -> None:
-    gh   = Github(api_key)
+def extract_pulls(org_name: str, repo_name: str, api_key: str, min_pull: int = 0, max_pull: int = None) -> None:
+    gh = Github(api_key)
     repo = gh.get_organization(org_name).get_repo(repo_name)
-
     pull_rows, comment_rows = [], []
+    count = 0
 
     for pr in repo.get_pulls(state="all"):
+        if count < min_pull:
+            count += 1
+            continue
+        
+        if max_pull is not None and count >= max_pull:
+            break
+
         pull_rows.append({
             # IDENTITY
             "number": pr.number,
@@ -85,12 +92,12 @@ def extract_pulls(org_name: str, repo_name: str, api_key: str) -> None:
     out_dir.mkdir(exist_ok=True)
 
     pulls_df.to_excel(
-        out_dir / f"{org_name.lower()}_{repo_name.lower()}_pulls.xlsx",
+        out_dir / f"{org_name.lower()}_{repo_name.lower()}_{min_pull}_{max_pull}_pulls.xlsx",
         engine="openpyxl"
     )
 
     comments_df.to_excel(
-        out_dir / f"{org_name.lower()}_{repo_name.lower()}_pulls_comments.xlsx",
+        out_dir / f"{org_name.lower()}_{repo_name.lower()}_{min_pull}_{max_pull}_pulls_comments.xlsx",
         engine="openpyxl"
     )
 
@@ -98,6 +105,11 @@ def extract_pulls(org_name: str, repo_name: str, api_key: str) -> None:
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser(description="Export pull‑requests + review‑comments")
-    p.add_argument("org_name"), p.add_argument("repo_name"), p.add_argument("api_key")
+    p.add_argument("org_name",  help="GitHub organization / user name")
+    p.add_argument("repo_name", help="Repository name")
+    p.add_argument("api_key", help="Github API Key")
+    p.add_argument("--min_pull", type=int, default=0, help="Min Pull (Starting Index)")
+    p.add_argument("--max_pull", type=int, default=10000000, help="Max Pull (Ending Index)")
     args = p.parse_args()
-    extract_pulls(args.org_name, args.repo_name, args.api_key)
+    
+    extract_pulls(args.org_name, args.repo_name, args.api_key, args.min_pull, args.max_pull)

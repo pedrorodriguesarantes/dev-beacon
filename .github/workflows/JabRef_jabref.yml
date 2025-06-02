@@ -30,11 +30,24 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r backend/requirements.txt
 
-    - name: Run Extraction Scripts
+    - name: Run Extraction Scripts (Issues)
       run: |
         cd backend/functions
         python issueExtractor.py JabRef jabref $API_KEY
-        python pullRequestExtractor.py JabRef jabref $API_KEY
+
+    - name: Run Extraction Scripts (Pull Requests Part 1)
+      run: |
+        cd backend/functions
+        python pullRequestExtractor.py JabRef jabref $API_KEY 0 5000
+
+    - name: Run Extraction Scripts (Pull Requests Part 2) 
+      run: |
+        cd backend/functions
+        python pullRequestExtractor.py JabRef jabref $API_KEY 5000
+
+    - name: Run Extraction Scripts (Milestone)
+      run: |
+        cd backend/functions
         python milestoneExtractor.py JabRef jabref $API_KEY
 
     - name: List files in metrics folder

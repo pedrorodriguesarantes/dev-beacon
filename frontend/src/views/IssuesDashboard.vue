@@ -135,8 +135,8 @@ const initialized = ref(false);
 
 onMounted(async () => {
   try {
-    const response = await axios.get(`https://raw.githubusercontent.com/pedrorodriguesarantes/dev-beacon/main/metrics/${owner.toLowerCase()}/${repo.toLowerCase()}/issuesAnalysis.json`);
-    //const response = await axios.get('/issuesAnalysis.json');
+    // const response = await axios.get(`https://raw.githubusercontent.com/pedrorodriguesarantes/dev-beacon/main/metrics/${owner.toLowerCase()}/${repo.toLowerCase()}/issuesAnalysis.json`);
+    const response = await axios.get('/issuesAnalysis.json');
     issuesData.value = response.data;
 
     const res = await fetch('/repositories.json');

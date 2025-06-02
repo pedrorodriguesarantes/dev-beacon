@@ -13,13 +13,27 @@ import argparse
 from datetime import datetime, timezone, timedelta
 from utils.dataProcessing import * 
 from pathlib import Path
+from glob import glob
 
 def processProductivityPR(org_name: str, repo_name: str) -> None:
     base_dir = Path(__file__).resolve().parents[1] 
     files_dir = base_dir / "files"
+    
+    pull_files = sorted(glob(str(files_dir / f"{org_name.lower()}_{repo_name.lower()}_*_*_pulls.xlsx")))
+    comment_files = sorted(glob(str(files_dir / f"{org_name.lower()}_{repo_name.lower()}_*_*_pulls_comments.xlsx")))
 
-    pulls_df = pd.read_excel(files_dir / f"{org_name.lower()}_{repo_name.lower()}_pulls.xlsx")
-    comments_df = pd.read_excel(files_dir / f"{org_name.lower()}_{repo_name.lower()}_pulls_comments.xlsx")
+    if not pull_files or not comment_files:
+        print("No pull request or comment files found for the given pattern.")
+        return
+
+    pulls_df_list = [pd.read_excel(file) for file in pull_files]
+    pulls_df = pd.concat(pulls_df_list, ignore_index=True)
+
+    comments_df_list = [pd.read_excel(file) for file in comment_files]
+    comments_df = pd.concat(comments_df_list, ignore_index=True)
+
+    print(f"Loaded {len(pull_files)} pull request files and {len(comment_files)} comment files.")
+    print(f"Total PRs: {len(pulls_df)}, Total comments: {len(comments_df)}")
 
     pulls_df['created_at'] = pd.to_datetime(pulls_df['created_at'], utc=True, errors='coerce')
     pulls_df['closed_at']  = pd.to_datetime(pulls_df['closed_at'], utc=True, errors='coerce')

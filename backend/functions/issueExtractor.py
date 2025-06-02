@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-usage: python issueExtractor.py org_name repo_name apiKey
+usage: python issueExtractor.py org_name repo_name apiKey min_issues max_issues
 """
 
 import argparse
@@ -14,16 +14,23 @@ from github import Github
 from utils.dataCleaning import *
 from pathlib import Path
 
-def extract_issues(org_name: str, repo_name: str, apiKey: str) -> None:
+def extract_issues(org_name: str, repo_name: str, apiKey: str, min_issues: int = 0, max_issues: int = None) -> None:
     gh = Github(apiKey)
-    org  = gh.get_organization(org_name)
+    org = gh.get_organization(org_name)
     repo = org.get_repo(repo_name)
-
     issues, comments = [], []
-
+    count = 0
+    
     for issue in repo.get_issues(state="all"):
         if issue.pull_request:
             continue
+        
+        if count < min_issues:
+            count += 1
+            continue
+        
+        if max_issues is not None and count >= max_issues:
+            break
 
         issues.append({
             # IDENTITY
@@ -73,11 +80,11 @@ def extract_issues(org_name: str, repo_name: str, apiKey: str) -> None:
     out_dir.mkdir(exist_ok=True)
 
     issues_df.to_excel(
-        f"{out_dir}/{org_name.lower()}_{repo_name.lower()}_issues.xlsx",
+        f"{out_dir}/{org_name.lower()}_{repo_name.lower()}_{min_issues}_{max_issues}_issues.xlsx",
         engine="openpyxl",
     )
     comments_df.to_excel(
-        f"{out_dir}/{org_name.lower()}_{repo_name.lower()}_issues_comments.xlsx",
+        f"{out_dir}/{org_name.lower()}_{repo_name.lower()}_{min_issues}_{max_issues}_issues_comments.xlsx",
         engine="openpyxl",
     )
     print("Done ✔︎")
@@ -87,6 +94,8 @@ if __name__ == "__main__":
     parser.add_argument("org_name",  help="GitHub organization / user name")
     parser.add_argument("repo_name", help="Repository name")
     parser.add_argument("api_key", help="Github API Key")
+    parser.add_argument("--min_issues", type=int, default=0, help="Min Issues (Starting Index)")
+    parser.add_argument("--max_issues", type=int, default=10000000, help="Max Issues (Ending Index)")
     args = parser.parse_args()
 
-    extract_issues(args.org_name, args.repo_name, args.api_key)
+    extract_issues(args.org_name, args.repo_name, args.api_key, args.min_issues, args.max_issues)

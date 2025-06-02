@@ -13,13 +13,26 @@ import argparse
 from datetime import datetime, timezone, timedelta
 from utils.dataProcessing import * 
 from pathlib import Path
+from glob import glob
 
 def processProductivityIS(org_name: str, repo_name: str) -> None:
-    base_dir = Path(__file__).resolve().parents[1] 
+    base_dir = Path(__file__).resolve().parents[1]
     files_dir = base_dir / "files"
 
-    issues_df = pd.read_excel(files_dir / f"{org_name.lower()}_{repo_name.lower()}_issues.xlsx")
-    comments_df = pd.read_excel(files_dir / f"{org_name.lower()}_{repo_name.lower()}_issues_comments.xlsx")
+    issue_files = sorted(glob(str(files_dir / f"{org_name.lower()}_{repo_name.lower()}_*_*_issues.xlsx")))
+    comment_files = sorted(glob(str(files_dir / f"{org_name.lower()}_{repo_name.lower()}_*_*_issues_comments.xlsx")))
+
+    if not issue_files or not comment_files:
+        print("No issue or comment files found for the given pattern.")
+        return
+    
+    issues_df_list = [pd.read_excel(file) for file in issue_files]
+    issues_df = pd.concat(issues_df_list, ignore_index=True)
+    comments_df_list = [pd.read_excel(file) for file in comment_files]
+    comments_df = pd.concat(comments_df_list, ignore_index=True)
+
+    print(f"Loaded {len(issue_files)} issue files and {len(comment_files)} comment files.")
+    print(f"Total issues: {len(issues_df)}, Total comments: {len(comments_df)}")
 
     issues_df['created_at'] = pd.to_datetime(issues_df['created_at'], utc=True, errors='coerce')
     issues_df['closed_at']  = pd.to_datetime(issues_df['closed_at'], utc=True, errors='coerce')

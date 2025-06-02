@@ -30,11 +30,19 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r backend/requirements.txt
 
-    - name: Run Extraction Scripts
+    - name: Run Extraction Scripts (Issues)
       run: |
         cd backend/functions
         python issueExtractor.py Rdatatable data.table $API_KEY
+    
+    - name: Run Extraction Scripts (Pull Requests)
+      run: |
+        cd backend/functions
         python pullRequestExtractor.py Rdatatable data.table $API_KEY
+    
+    - name: Run Extraction Scripts (Milestone)
+      run: |
+        cd backend/functions
         python milestoneExtractor.py Rdatatable data.table $API_KEY
 
     - name: List files in metrics folder
