@@ -13,5 +13,5 @@ module load python/3.9            # or comment out if not needed
 git pull --ff-only origin main || echo "⚠️  Git pull skipped"
 
 # ─── 3. Make sure the driver script is executable and run it ──────────────────
-chmod +x ../bash/vercel_nextjs.sh
-../bash/vercel_nextjs.sh             # all logic lives in this file
+chmod +x ../bash/numpy_numpy.sh
+../bash/numpy_numpy.sh             # all logic lives in this file

@@ -1,36 +1,17 @@
 #!/bin/bash
-#SBATCH --job-name=devBeaconPandas
-#SBATCH --output=/scratch/pro32/devBeacon/logs/pandasOutput.txt     # Adjust path as needed
-#SBATCH --time=48:00:00                                                 # Job time limit
-#SBATCH --chdir=/scratch/pro32/devBeacon/                               # Project working directory
-#SBATCH --mem=16000                                                     # Memory allocation (in MB)
-#SBATCH --mail-type=FAIL                                                # Notifications on job failure
+#SBATCH --job-name=devBeaconJabref
+#SBATCH --output=/scratch/pro32/devBeacon/logs/jabrefOutput.txt   # stdout / stderr
+#SBATCH --chdir=/scratch/pro32/devBeacon/                         # repo root
+#SBATCH --time=48:00:00                                           # wall‑clock limit
+#SBATCH --mem=16000                                               # RAM (MB)
+#SBATCH --mail-type=FAIL                                          # e‑mail on failure
 
-# Optional: specify modules (adjust to your system)
-module load python/3.9
+# ─── 1. HPC‑specific environment (adjust if your cluster uses modules) ─────────
+module load python/3.9            # or comment out if not needed
 
-# Securely load your API key from a secrets file outside the project
-source /scratch/pro32/devBeacon/secrets/github.env
+# ─── 2. Optional: keep code up‑to‑date ─────────────────────────────────────────
+git pull --ff-only origin main || echo "⚠️  Git pull skipped"
 
-# Activate the Python virtual environment
-source .venv/bin/activate
-
-# Pull latest changes (optional, ensures you're working with the latest code)
-git pull origin main   # Adjust branch if needed
-
-# Run your extraction scripts with the secret API key
-python backend/functions/issueExtractor.py pandas-dev pandas $API_KEY
-python backend/functions/pullRequestExtractor.py pandas-dev pandas $API_KEY
-python backend/functions/milestoneExtractor.py pandas-dev pandas $API_KEY
-
-python productivityISProcessing.py pandas-dev pandas
-python productivityPRProcessing.py pandas-dev pandas
-
-# Configure Git user
-git config --global user.name "pedrorodriguesarantes"
-git config --global user.email "pedrorodriguesarantes@gmail.com"
-
-# Add and commit changes (replace 'backend/files' and 'backend/metrics' with your target folders)
-git add backend/files backend/metrics
-git commit -m "Update metrics and issues from SLURM run [skip ci]" || echo "No changes to commit"
-git push origin main   # Adjust branch if needed
+# ─── 3. Make sure the driver script is executable and run it ──────────────────
+chmod +x ../bash/pandas_pandasdev.sh
+../bash/pandas_pandasdev.sh             # all logic lives in this file

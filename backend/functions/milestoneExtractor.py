@@ -11,6 +11,7 @@ import pandas as pd
 from dotenv import load_dotenv
 from github import Github
 from utils.dataCleaning import *
+from pathlib import Path
 
 def extract_milestones(org_name: str, repo_name: str, apiKey: str) -> None:
     gh = Github(apiKey)
@@ -31,8 +32,8 @@ def extract_milestones(org_name: str, repo_name: str, apiKey: str) -> None:
             }
         )
 
-    out_dir = "files"
-    os.makedirs(out_dir, exist_ok=True)
+    out_dir = Path(__file__).resolve().parents[1] / "files"
+    out_dir.mkdir(exist_ok=True)
 
     pd.DataFrame(milestones).astype(str).to_excel(
         f"{out_dir}/{org_name.lower()}_{repo_name.lower()}_milestones.xlsx",
