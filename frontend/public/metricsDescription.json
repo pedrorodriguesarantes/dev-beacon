@@ -4,168 +4,192 @@
       "label": "Active Chat‑Participation Rate",
       "description": "% of project contributors who posted at least one message in chat in the past week.",
       "path": "engagementAnalysis.json > active_chat_participation_rate.<frame>",
-      "graph": "line"
+      "graph": "line",
+      "group": "engagement"
     },
     {
       "id": "committer_churn_rate",
       "label": "Committer Churn Rate",
       "description": "% of last‑year committers now inactive — core‑dev retention.",
       "path": "engagementAnalysis.json > committer_churn_rate",
-      "graph": "metric"
+      "graph": "metric",
+      "group": "engagement"
     },
     {
       "id": "committer_concentration_gini",
       "label": "Committer Concentration (Gini)",
       "description": "Inequality of commits among committers; higher = more concentrated.",
       "path": "engagementAnalysis.json > committer_concentration_gini.<frame>",
-      "graph": "bar"
+      "graph": "bar",
+      "group": "engagement"
     },
     {
       "id": "contributor_counts_yoy",
       "label": "Contributor Growth Rate (YoY)",
       "description": "Year‑over‑year momentum in contributor count.",
       "path": "engagementAnalysis.json > contributor_counts_yoy",
-      "graph": "line"
+      "graph": "line",
+      "group": "engagement"
     },
     {
       "id": "occasional_contributors",
       "label": "Count of Occasional Contributors",
       "description": "Contributors with ≤ K contributions in the trailing year.",
       "path": "engagementAnalysis.json > occasional_contributors.<frame>",
-      "graph": "bar"
+      "graph": "bar",
+      "group": "engagement"
     },
     {
       "id": "retention_90d",
       "label": "90‑Day Retention (%)",
       "description": "Share of newcomers still active three months later.",
       "path": "newcomerAnalysis.json > retention_90d.<frame>",
-      "graph": "bar"
+      "graph": "bar",
+      "group": "newcomers"
     },
     {
       "id": "median_time_to_second_contribution",
       "label": "Median Time‑to‑Second Contribution (days)",
       "description": "How quickly newcomers return with a second contribution.",
       "path": "newcomerAnalysis.json > median_time_to_second_contribution.<frame>",
-      "graph": "bar"
+      "graph": "bar",
+      "group": "newcomers"
     },
     {
       "id": "newcomers_count",
       "label": "New Contributors (count)",
       "description": "Number of developers whose first contribution landed in the period.",
       "path": "newcomerAnalysis.json > newcomers_count.<frame>",
-      "graph": "line"
+      "graph": "line",
+      "group": "newcomers"
     },
     {
       "id": "onboarding_success",
       "label": "Onboarding Success Rate (%)",
       "description": "First PR / issue acceptance rate for newcomers.",
       "path": "newcomerAnalysis.json > onboarding_success.<frame>",
-      "graph": "bar"
+      "graph": "bar",
+      "group": "newcomers"
     },
     {
       "id": "issues_opened_count",
       "label": "Total Opened Issues",
       "description": "How many new issues were opened in the selected period.",
       "path": "issuesAnalysis.json > <frame>_opened_last",
-      "graph": "metric"
+      "graph": "metric",
+      "group": "issues"
     },
     {
       "id": "issues_closed_count",
       "label": "Total Closed Issues",
       "description": "Issues closed in the selected period.",
       "path": "issuesAnalysis.json > <frame>_closed_last",
-      "graph": "metric"
+      "graph": "metric",
+      "group": "issues"
     },
     {
       "id": "issues_backlog_size",
       "label": "Issue Backlog Size",
       "description": "Number of open issues at the end of each window.",
       "path": "issuesAnalysis.json > backlog_<frame>s",
-      "graph": "line"
+      "graph": "line",
+      "group": "issues"
     },
     {
       "id": "issues_open_rate",
       "label": "Opening Issues Rate",
       "description": "Daily / weekly / monthly count of issues opened (flow in).",
       "path": "issuesAnalysis.json > open_by_<frame>",
-      "graph": "area"
+      "graph": "area",
+      "group": "issues"
     },
     {
       "id": "issues_close_rate",
       "label": "Closing Issues Rate",
       "description": "Issues closed per period (flow out).",
       "path": "issuesAnalysis.json > close_by_<frame>",
-      "graph": "area"
+      "graph": "area",
+      "group": "issues"
     },
     {
       "id": "issues_time_to_first_answer",
       "label": "Time to First Answer",
       "description": "Average time for someone other than the author to reply to an issue.",
       "path": "issuesAnalysis.json > time_to_answer_<frame>",
-      "graph": "bar"
+      "graph": "bar",
+      "group": "issues"
     },
     {
       "id": "issues_time_to_close",
       "label": "Time to Close",
       "description": "Average time from issue opening to close.",
       "path": "issuesAnalysis.json > time_to_close_<frame>",
-      "graph": "bar"
+      "graph": "bar",
+      "group": "issues"
     },
     {
       "id": "prs_opened_count",
       "label": "Total Opened PRs",
       "description": "Pull requests opened in the selected period.",
       "path": "pullRequestAnalysis.json > <frame>_opened_last",
-      "graph": "metric"
+      "graph": "metric",
+      "group": "Pull Request"
     },
     {
       "id": "prs_closed_count",
       "label": "Total Closed PRs",
       "description": "Pull requests closed in the selected period.",
       "path": "pullRequestAnalysis.json > <frame>_closed_last",
-      "graph": "metric"
+      "graph": "metric",
+      "group": "Pull Request"
     },
     {
       "id": "prs_merged_count",
       "label": "Total Merged PRs",
       "description": "Merged pull requests in the period.",
       "path": "pullRequestAnalysis.json > <frame>_merged_last",
-      "graph": "metric"
+      "graph": "metric",
+      "group": "Pull Request"
     },
     {
       "id": "prs_backlog_size",
       "label": "PR Backlog Size",
       "description": "Number of open pull requests over time.",
       "path": "pullRequestAnalysis.json > backlog_<frame>s",
-      "graph": "line"
+      "graph": "line",
+      "group": "Pull Request"
     },
     {
       "id": "prs_open_rate",
       "label": "Opening PR Rate",
       "description": "PRs opened per period.",
       "path": "pullRequestAnalysis.json > open_by_<frame>",
-      "graph": "area"
+      "graph": "area",
+      "group": "Pull Request"
     },
     {
       "id": "prs_close_rate",
       "label": "Closing PR Rate",
       "description": "PRs closed per period.",
       "path": "pullRequestAnalysis.json > close_by_<frame>",
-      "graph": "area"
+      "graph": "area",
+      "group": "Pull Request"
     },
     {
       "id": "prs_time_to_close",
       "label": "Time to Close (PR)",
       "description": "Average time from PR creation to close.",
       "path": "pullRequestAnalysis.json > time_to_close_<frame>",
-      "graph": "bar"
+      "graph": "bar",
+      "group": "Pull Request"
     },
     {
       "id": "prs_merge_rate",
       "label": "Merge Rate (%)",
       "description": "Percentage of closed PRs that were merged.",
       "path": "pullRequestAnalysis.json > merge_rate_by_<frame>",
-      "graph": "line"
+      "graph": "line",
+      "group": "Pull Request"
     }
 ]
         
