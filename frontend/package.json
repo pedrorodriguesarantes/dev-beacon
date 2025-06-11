@@ -9,6 +9,7 @@
     "start": "npm run serve"
   },
   "dependencies": {
+    "@heroicons/vue": "^2.2.0",
     "autoprefixer": "^10",
     "axios": "^1.5.0",
     "core-js": "^3.8.3",

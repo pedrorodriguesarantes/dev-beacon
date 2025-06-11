@@ -1,2 +1,4 @@
 .venv
 keys.json
+files/
+functions/utils/__pycache__/

@@ -49,6 +49,7 @@ python backend/functions/milestoneExtractor.py Rdatatable data.table "$API_KEY"
 
 python backend/functions/productivityISProcessing.py Rdatatable data.table
 python backend/functions/productivityPRProcessing.py Rdatatable data.table
+python backend/functions/newcomersProcessing.py Rdatatable data.table
 
 ###############################################################################
 # 6️⃣  Commit any generated metrics

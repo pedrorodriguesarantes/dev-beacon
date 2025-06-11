@@ -2,8 +2,8 @@ import pandas as pd
 import numpy as np
 import json
 
+from glob import glob
 from datetime import datetime, timezone, timedelta
-
 now = datetime.now(timezone.utc)
 
 def in_range(dt, start, end):
@@ -101,7 +101,6 @@ def rolling_avg_time_to_close(times, points, period):
             avg = np.nan
         avg_times.append(avg)
     return avg_times
-
 
 def period_merge_rate(pulls_df, mask) -> float:
         """

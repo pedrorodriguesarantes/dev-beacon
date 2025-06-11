@@ -48,31 +48,6 @@ import PullRequestDashboard      from '@/views/PullRequestDashboard.vue';
 
 import reposData from '../../public/repositories.json';
 
-/* ───────────── SIDEBAR DATA ───────────── */
-const menuGroups = [
-  {
-    title: 'Statistics',
-    options: [
-      { value: 'IssuesDashboard', label: 'Productivity (Issue)', description: 'Issues KPIs & trends' },
-      { value: 'PullRequestDashboard',    label: 'Productivity (Pull Request)', description: 'Pull‑request KPIs' },
-      { value: 'communityActivity', label: 'Community Activity', description: 'Discussions, stars, forks' }
-    ]
-  },
-  {
-    title: 'Developer Analysis',
-    options: [
-      { value: 'turnoverPrediction', label: 'Turnover Prediction', description: 'Churn risk model' },
-      { value: 'turnoverImpact',     label: 'Turnover Impact',     description: 'How churn affects KPIs' }
-    ]
-  },
-  {
-    title: 'Our Team',
-    options: [
-      { value: 'ourTeam', label: 'Reshape Lab', description: 'Meet our amazing team!' }
-    ]
-  }
-];
-
 /* ───────────── STATE ───────────── */
 const selectedPage = ref('IssuesDashboard');
 const frame        = ref('month');
