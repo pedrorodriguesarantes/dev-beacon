@@ -1,11 +1,12 @@
+<!-- eslint-disable no-irregular-whitespace -->
 <template>
   <div class="flex gap-6">
-    <!-- ─────────── PERSISTENT LEFT MENU ─────────── -->
+    <!-- ───────── LEFT MENU ───────── -->
     <MenuCard :owner="owner" :repo="repo" />
 
-    <!-- ─────────── RIGHT WORKSPACE ─────────── -->
+    <!-- ───────── RIGHT WORKSPACE ───────── -->
     <div class="flex-1 space-y-4">
-      <!-- Tabs -->
+      <!-- Tabs header -->
       <div class="flex border-b border-gray-200">
         <button
           v-for="t in tabs"
@@ -18,6 +19,20 @@
         >
           {{ tabLabels[t] }}
         </button>
+
+        <div class="ml-auto flex items-center gap-2 px-4 py-2">
+          <input
+            v-model="dashboardTitle"
+            placeholder="Dashboard title"
+            class="border rounded px-2 py-1 text-sm w-48"
+          />
+          <button
+            @click="saveDashboard"
+            class="bg-green-600 text-white text-sm px-3 py-1 rounded hover:bg-green-700"
+          >
+            💾 Save
+          </button>
+        </div>
       </div>
 
       <!-- ① LLM CHAT TAB -->
@@ -33,9 +48,8 @@
               :class="m.role === 'user'
                 ? 'bg-indigo-600 text-white'
                 : 'bg-gray-200 text-gray-800'"
-            >
-              {{ m.content }}
-            </p>
+              v-html="renderMarkdown(m.content)"
+            />
           </div>
         </div>
         <form @submit.prevent="handleSend" class="mt-3 flex">
@@ -49,9 +63,8 @@
         </form>
       </div>
 
-      <!-- ② MANUAL PICKER TAB -->
+      <!-- ② MANUAL BUILDER TAB -->
       <div v-else-if="activeTab === 'builder'" class="flex gap-6">
-        <!-- Group rail -->
         <aside class="w-64 space-y-4">
           <button
             v-for="g in groups"
@@ -66,7 +79,6 @@
           </button>
         </aside>
 
-        <!-- Metric chooser -->
         <section v-if="selectedGroup" class="flex-1">
           <h2 class="text-lg font-semibold mb-4 capitalize">
             {{ selectedGroup }} — choose metrics
@@ -85,7 +97,7 @@
                 type="checkbox"
                 class="sr-only"
                 :checked="isSelected(m.id)"
-                @change="toggleMetric(m.id)"
+                @change="toggleMetric(m)"
               />
               <span class="font-medium">{{ m.label }}</span>
               <span class="text-xs text-gray-500">{{ m.description }}</span>
@@ -96,95 +108,149 @@
       </div>
 
       <!-- ③ PREVIEW TAB -->
-      <div v-else class="min-h-[75vh] bg-gray-50 rounded-2xl p-6">
-        <h3 class="text-lg font-semibold mb-4 text-gray-700">
-          LLM‑generated preview
+      <div v-else-if="activeTab === 'preview'" class="min-h-[75vh] bg-gray-50 rounded-2xl p-6 space-y-8">
+        <h3 class="text-lg font-semibold text-gray-700">
+          Dashboard preview
         </h3>
-        <div
-          v-if="selectedMetrics.length"
-          class="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
-        >
-          <component
-            v-for="id in selectedMetrics"
-            :key="id"
-            :is="widgetComponent(metricMap[id]?.type || 'div')"
-            v-bind="metricMap[id]?.props"
-          />
-        </div>
+
+        <template v-if="selectedMetrics.length">
+          <!-- KPI cards (metrics) -->
+          <div v-if="topMetrics.length" class="grid gap-4 md:grid-cols-3">
+            <MetricCard
+              v-for="item in topMetrics"
+              :key="item.id"
+              :title="metricMap[item.id]?.label"
+              :value="getValue(item)"
+            />
+          </div>
+
+          <!-- Graphs two‑per‑row -->
+          <div v-if="graphMetrics.length" class="grid gap-4 md:grid-cols-2">
+            <component
+              v-for="item in graphMetrics"
+              :key="item.id"
+              :is="widgetComponent(metricMap[item.id]?.graph)"
+              :title="metricMap[item.id]?.label"
+              :series="getValue(item)"
+              class="w-full"
+            />
+          </div>
+        </template>
+
         <p v-else class="text-gray-500">
-          Ask something in the LLM tab to generate a preview.
+          Select metrics in the Manual tab to generate a preview.
         </p>
       </div>
+
+      <!-- ③ PREVIEW TAB -->
+<div v-else class="min-h-[75vh] bg-gray-50 rounded-2xl p-6 space-y-8">
+  <h3 class="text-lg font-semibold text-gray-700">
+    LLM‑generated preview
+  </h3>
+
+  <template v-if="selectedMetrics.length">
+    <!-- KPI cards (metrics) -->
+    <div v-if="topMetrics.length" class="grid gap-4 md:grid-cols-3">
+      <MetricCard
+        v-for="item in topMetrics"
+        :key="item.id"
+        :title="metricMap[item.id]?.label"
+        :value="getValue(item) ?? '-'"
+      />
+    </div>
+
+    <!-- Graphs two‑per‑row -->
+    <div v-if="graphMetrics.length" class="grid gap-4 md:grid-cols-2">
+      <component
+        v-for="item in graphMetrics"
+        :key="item.id"
+        :is="widgetComponent(metricMap[item.id]?.graph)"
+        :title="metricMap[item.id]?.label"
+        :series="getValue(item)"
+        class="w-full"
+      />
+    </div>
+  </template>
+
+  <p v-else class="text-gray-500">
+    Select metrics in the Manual tab to generate a preview.
+  </p>
+</div>
+
     </div>
   </div>
 </template>
 
 <script setup>
-/* eslint-disable no-unused-vars */
-import { ref, reactive, computed, onMounted, watch } from 'vue';
-import { useRoute } from 'vue-router';
-import MenuCard      from '@/components/MenuCard.vue';
-import MetricCard    from '@/components/MetricCard.vue';
-import LineChart     from '@/components/LineChart.vue';
-import BarAreaCard   from '@/components/BarAreaCard.vue';
+import { ref, reactive, computed, onMounted, watch } from 'vue'
+import MarkdownIt               from 'markdown-it'
+import { useRoute }             from 'vue-router'
 
-/* ── route params ─────────────────────────────────────────────── */
-const route = useRoute();
-const owner = route.params.owner;
-const repo  = route.params.repo;
+import MenuCard     from '@/components/MenuCard.vue'
+import MetricCard   from '@/components/MetricCard.vue'
+import LineAreaCard from '@/components/LineAreaCard.vue'
+import BarAreaCard  from '@/components/BarAreaCard.vue'
 
-/* ── tabs ─────────────────────────────────────────────────────── */
-const tabs      = ['chat', 'builder', 'preview'];
-const tabLabels = { chat: 'LLM', builder: 'Manual', preview: 'Preview' };
-const activeTab = ref('chat');
+/* ───────── route + tabs ───────── */
+const { owner, repo } = useRoute().params
+const tabs      = ['chat', 'builder', 'preview']
+const tabLabels = { chat: 'LLM', builder: 'Manual', preview: 'Preview' }
+const activeTab = ref('chat')
 
-/* ── chat state ───────────────────────────────────────────────── */
-let messageId = 0;
-const chatMessages = reactive([]);
-const draft = ref('');
+/* ───────── chat state ───────── */
+let   messageId  = 0
+const chatMessages = reactive([])
+const draft        = ref('')
 
-/* ── metrics catalogue ────────────────────────────────────────── */
-const availableMetrics = ref([]);
+/* ───────── catalogue + selections ───────── */
+const availableMetrics = ref([])        // raw JSON catalogue
 const metricMap = computed(() =>
   Object.fromEntries(availableMetrics.value.map(m => [m.id, m]))
-);
-const selectedMetrics = ref([]);  // IDs ticked by user or suggested by LLM
+)
 
-/* ── grouping helpers ─────────────────────────────────────────── */
-const groups        = ref([]);    // e.g. ['issues', 'pull_request']
-const selectedGroup = ref(null);
+/* 🔑 keep selections as objects { id, size } everywhere */
+const selectedMetrics = ref([])         // reactive dashboard layout
+
+/* ───────── sidebar grouping ───────── */
+const groups        = ref([])
+const selectedGroup = ref(null)
+
+const dashboardTitle   = ref('')
+const savedDashboards  = ref([])
 
 watch(availableMetrics, list => {
-  groups.value = [...new Set(list.map(m => m.group || 'ungrouped'))];
-  if (!selectedGroup.value) selectedGroup.value = groups.value[0] || null;
-});
+  groups.value = [...new Set(list.map(m => m.group || 'ungrouped'))]
+  if (!selectedGroup.value) selectedGroup.value = groups.value[0] || null
+})
 
-/* metrics in the active group */
 const metricsForGroup = computed(() =>
-  availableMetrics.value.filter(
-    m => (m.group || 'ungrouped') === selectedGroup.value
-  )
-);
+  availableMetrics.value.filter(m => (m.group || 'ungrouped') === selectedGroup.value))
 
-/* picker helpers */
-const isSelected = id => selectedMetrics.value.includes(id);
-function toggleMetric(id) {
-  if (isSelected(id)) {
-    selectedMetrics.value = selectedMetrics.value.filter(x => x !== id);
+/* ───────── selection helpers ───────── */
+const isSelected = id => selectedMetrics.value.some(m => m.id === id)
+
+function toggleMetric(metric) {
+  if (isSelected(metric.id)) {
+    selectedMetrics.value = selectedMetrics.value.filter(m => m.id !== metric.id)
   } else {
-    selectedMetrics.value.push(id);
+    selectedMetrics.value.push({
+      id  : metric.id,
+      size: metric.graph === 'metric' ? 'small' : 'medium'
+    })
   }
 }
 
-/* component mapping for Preview tab (adjust if needed) */
-function widgetComponent(t) {
-  if (t === 'metric') return MetricCard;
-  if (t === 'line')   return LineChart;
-  if (t === 'bar')    return BarAreaCard;
-  return 'div';
+/* ───────── component resolver ───────── */
+function widgetComponent(type = '') {
+  const t = type.toLowerCase()
+  if (t === 'metric') return MetricCard
+  if (t === 'line') return LineAreaCard
+  if (t.startsWith('bar')) return BarAreaCard
+  if (t.startsWith('area')) return LineAreaCard
+  return 'div'
 }
 
-/* ── Ollama interaction (unchanged) ──────────────────────────── */
+/* ───────── LLM helper ───────── */
 async function queryOllama(userPrompt) {
   const catalogue = availableMetrics.value.map(m => ({ id: m.id, label: m.label }));
   const alreadySelected = selectedMetrics.value.map(id => ({
@@ -196,9 +262,9 @@ async function queryOllama(userPrompt) {
 You are part of an interactive dashboard‑builder. Your ONLY task is to choose which metrics best match the user's request.
 
 INSTRUCTIONS
-‣ Pick from the catalogue below.  
+‣ Pick from the catalogue below.
 ‣ Output **exactly one** of the two actions between dollar‑signs:
-    $APPEND$  – add these metrics to the dashboard  
+    $APPEND$  – add these metrics to the dashboard
     $REMOVE$  – remove these metrics from the dashboard
 ‣ Immediately after the action, output a JavaScript array with the metric IDs:
     ["metric_id_A", "metric_id_B"]
@@ -216,91 +282,225 @@ ${JSON.stringify(alreadySelected, null, 2)}
 USER REQUEST
 ${userPrompt}
 `;
-
+  /* the fetch / streaming logic stays the same … */
   try {
     const res = await fetch('http://localhost:11434/api/generate', {
-      method: 'POST',
+      method : 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: 'llama3.1:8b', prompt }),
-    });
-
-    if (!res.ok) {
-      chatMessages.push({ id: messageId++, role: 'assistant', content: `Error: HTTP ${res.status}` });
-      return;
-    }
-
-    const reader  = res.body.getReader();
-    const decoder = new TextDecoder();
-    let assistantFull = '';
-
+      body   : JSON.stringify({ model: 'llama3.1:8b', prompt }),
+    })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    const reader  = res.body.getReader()
+    const decoder = new TextDecoder()
+    let assistantFull = ''
     // eslint-disable-next-line no-constant-condition
     while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      const chunk = decoder.decode(value, { stream: true });
-      chunk.split('\n').forEach(line => {
-        if (!line.trim()) return;
-        try {
-          const obj = JSON.parse(line);
-          if (obj.response) assistantFull += obj.response;
-        } catch {/* ignore malformed lines */}
-      });
+      const { done, value } = await reader.read()
+      if (done) break
+      decoder.decode(value, { stream: true })
+            .split('\n')
+            .filter(Boolean)
+            .forEach(line => {
+              try {
+                const obj = JSON.parse(line)
+                if (obj.response) assistantFull += obj.response
+              } catch {
+                /* Ignore */
+              }
+            })
     }
-    return [{ id: messageId++, role: 'assistant', content: assistantFull }];
+    return assistantFull
   } catch (err) {
-    chatMessages.push({ id: messageId++, role: 'assistant', content: `Error: ${err.message}` });
+    chatMessages.push({
+      id: messageId++, role: 'assistant',
+      content: `**Virtual Assistant** 🧠\nError: ${err.message}`
+    })
   }
 }
 
+/* ───────── chat handler ───────── */
 async function handleSend() {
-  const content = draft.value.trim();
-  if (!content) return;
+  const content = draft.value.trim()
+  if (!content) return
 
-  chatMessages.push({ id: messageId++, role: 'user', content });
-  draft.value = '';
+  /* 1 ─ push user message */
+  chatMessages.push({ id: messageId++, role: 'user', content })
+  draft.value = ''
 
-  const message = await queryOllama(content);
-  const last = message?.at(-1);
-  if (!last || last.role !== 'assistant') return;
+  /* 2 ─ ask Ollama */
+  const raw = await queryOllama(content)
+  if (!raw) return
 
-  const txt      = last.content;
-  const actMatch = txt.match(/\$(APPEND|REMOVE)\$/);
-  const arrMatch = txt.match(/\[([^\]]+)\]/);
-  if (!actMatch || !arrMatch) return;
+  /* 3 ─ parse  $ACTION$ [ids] <message> */
+  const act   = raw.match(/\$(APPEND|REMOVE)\$/)?.[1]   // APPEND or REMOVE
+  let   ids   = []
+  try {
+    ids = JSON.parse('[' + (raw.match(/\[([^\]]+)\]/)?.[1] ?? '') + ']')
+  } catch {/* malformed array → leave empty */}
 
-  let ids = [];
-  try { ids = JSON.parse('[' + arrMatch[1] + ']'); } catch (e) { /* ignore */ }
-  const action = actMatch[1];
-  const titles = ids.map(id => metricMap.value[id]?.label || id);
+  const reply = raw.match(/<([\s\S]+?)>/)?.[1]?.trim()  // friendly text
 
-  if (action === 'REMOVE') {
-    selectedMetrics.value = selectedMetrics.value.filter(id => !ids.includes(id));
-    chatMessages.push({ id: messageId++, role: 'assistant', content: `Metrics Removed: ${titles.join(', ')}.` });
-  } else {
-    const newIds = ids.filter(id => !selectedMetrics.value.includes(id));
-    selectedMetrics.value.push(...newIds);
-    chatMessages.push({ id: messageId++, role: 'assistant', content: `Metrics Added: ${titles.join(', ')}.` });
-
-    chatMessages.push({ id: messageId++, role: 'assistant', content: 'Here is a brief description:' });
-    const descLines = newIds.flatMap(id => {
-      const m = metricMap.value[id];
-      if (!m) return [];
-      return [`• ${m.label}`, `  ${m.description || 'No description.'}`, ''];
-    }).join('\n');
-    chatMessages.push({ id: messageId++, role: 'assistant', content: descLines });
-    chatMessages.push({ id: messageId++, role: 'assistant', content: 'If you have questions about how each metric is calculated, you can check the information section located upper right on each graph.' });
+  /* 4 ─ show the friendly chat response, if any */
+  if (reply) {
+    chatMessages.push({
+      id: messageId++,
+      role: 'assistant',
+      content: `**Virtual Assistant** 🧠\n${reply}`
+    })
   }
 
-  chatMessages.push(...message);
+  if (!act || !ids.length) return        // nothing to do
+
+  /* pretty names for logs */
+  const titles = ids.map(id => metricMap.value[id]?.label || id)
+
+  /* 5 ─ mutate selection + technical feedback */
+  if (act === 'REMOVE') {
+    selectedMetrics.value = selectedMetrics.value.filter(m => !ids.includes(m.id))
+
+    chatMessages.push({
+      id: messageId++,
+      role: 'assistant',
+      content: `**Virtual Assistant** 🧠\nMetrics removed: ${titles.join(', ')}.`
+    })
+
+  } else if (act === 'APPEND') {
+    const newbies = ids.filter(id => !selectedMetrics.value.some(m => m.id === id))
+
+    if (newbies.length) {
+      selectedMetrics.value.push(
+        ...newbies.map(id => ({
+          id,
+          size: metricMap.value[id]?.graph === 'metric' ? 'small' : 'medium'
+        }))
+      )
+
+      /* build a quick description block */
+      const descLines = newbies.flatMap(id => {
+        const m = metricMap.value[id]
+        if (!m) return []
+        return [`• **${m.label}**`, m.description ? `  ${m.description}` : '', '']
+      }).join('\n')
+
+      chatMessages.push({
+        id: messageId++,
+        role: 'assistant',
+        content: `**Virtual Assistant** 🧠\nHere is a brief description:\n${descLines}`
+      })
+
+    } else {
+      /* user asked for metrics that were already there */
+      chatMessages.push({
+        id: messageId++,
+        role: 'assistant',
+        content: `**Virtual Assistant** 🧠\nAll requested metrics were already selected.`
+      })
+    }
+  }
 }
 
-/* ── initial load ─────────────────────────────────────────────── */
-onMounted(async () => {
-  try {
-    const res = await fetch('/metricsDescription.json');
-    availableMetrics.value = await res.json();
-  } catch (err) {
-    console.error('Failed to load metricsDescription.json:', err);
+
+/* ───────── preview helpers ───────── */
+const topMetrics   = computed(() => selectedMetrics.value
+  .filter(m => metricMap.value[m.id]?.graph === 'metric'))
+const graphMetrics = computed(() => selectedMetrics.value
+  .filter(m => metricMap.value[m.id]?.graph !== 'metric'))
+
+const dataFiles = reactive({})          // { 'engagementAnalysis.json': { … } }
+
+/* ───────── strong-typed getValue ───────── */
+function getValue(item) {
+  const rawPath = metricMap.value[item.id]?.path;
+  if (!rawPath) return [];
+
+  // Split path
+  let file, key;
+  if (rawPath.includes('>')) {
+    [file, key] = rawPath.split('>').map(s => s.trim());
+  } else {
+    [file, key] = rawPath.split('/').map(s => s.trim());
   }
-});
+  if (!file || !key) return [];
+
+  // Lazy-load data
+  if (!dataFiles[file]) {
+    fetch('/' + file)
+      .then(r => r.json())
+      .then(json => (dataFiles[file] = json))
+      .catch(() => (dataFiles[file] = {}));
+    return [];
+  }
+
+  const frame = "month"; // "month" | "week" | "day"
+  const graphType = metricMap.value[item.id]?.graph?.toLowerCase();
+  const entry = dataFiles[file]?.[key];
+
+  // CASE 1 ▸ Not found yet
+  if (!entry) return [];
+
+  // CASE 2 ▸ Frame-based: { day: [...], month: [...], week: [...] }
+  if (entry?.[frame]) return entry[frame];
+
+  // CASE 3 ▸ Object: { x1: y1, x2: y2 } ➝ [{ x, y }]
+  if (typeof entry === 'object' && !Array.isArray(entry)) {
+    return Object.entries(entry).map(([x, y]) => ({ x, y }));
+  }
+
+  // CASE 4 ▸ Array (already correct shape for charts)
+  if (Array.isArray(entry)) return entry;
+
+  // CASE 5 ▸ Scalar metric (for cards)
+  if (graphType === 'metric') {
+    return typeof entry === 'number' ? entry : null;
+  }
+
+  return []; // fallback safe shape
+}
+
+/* ───────── watcher for debug ───────── */
+watch(selectedMetrics, v =>
+  console.log('▶︎ selectedMetrics', JSON.parse(JSON.stringify(v)))
+, { deep: true })
+
+/* ───────── initial load ───────── */
+onMounted(async () => {
+  const res = await fetch('/metricsDescription.json')
+  availableMetrics.value = await res.json()
+  chatMessages.push({
+    id: messageId++, role: 'assistant',
+    content:
+        `**Virtual Assistant** 🧠\n` +
+        `Welcome! Tell me what insights you need and I’ll add the best metrics. \n` +
+        `If you ever wonder how a metric is calculated, feel free to ask me! `
+    })
+})
+
+/* ───────── markdown helper ───────── */
+const md = new MarkdownIt({ breaks: true, linkify: true, html: false })
+const renderMarkdown = txt => md.render(txt || '')
+
+function saveDashboard() {
+  const name = dashboardTitle.value.trim()
+  if (!name) {
+    alert('Please enter a dashboard title.')
+    return
+  }
+
+  const payload = {
+    id      : Date.now().toString(),      // unique ID ⇢ string safer for routing
+    title   : name,
+    metrics : JSON.parse(JSON.stringify(selectedMetrics.value)),
+    tsSaved : Date.now()
+  }
+
+  const all = JSON.parse(localStorage.getItem('savedDashboards') || '[]')
+  all.push(payload)
+  localStorage.setItem('savedDashboards', JSON.stringify(all))
+
+  savedDashboards.value = all
+  dashboardTitle.value  = ''
+  window.dispatchEvent(new Event('dashboards-updated'))
+  alert(`Dashboard "${name}" saved.`)
+}
+
 </script>

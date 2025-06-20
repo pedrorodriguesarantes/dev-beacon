@@ -19,8 +19,8 @@ def processProductivityIS(org_name: str, repo_name: str) -> None:
     base_dir = Path(__file__).resolve().parents[1]
     files_dir = base_dir / "files"
 
-    issue_files = sorted(glob(str(files_dir / f"{org_name.lower()}_{repo_name.lower()}_*_*_issues.xlsx")))
-    comment_files = sorted(glob(str(files_dir / f"{org_name.lower()}_{repo_name.lower()}_*_*_issues_comments.xlsx")))
+    issue_files = sorted(glob(str(files_dir / f"{org_name.lower()}_{repo_name.lower()}_issues.xlsx")))
+    comment_files = sorted(glob(str(files_dir / f"{org_name.lower()}_{repo_name.lower()}_issues_comments.xlsx")))
 
     if not issue_files or not comment_files:
         print("No issue or comment files found for the given pattern.")
@@ -42,21 +42,34 @@ def processProductivityIS(org_name: str, repo_name: str) -> None:
     total_opened = issues_df['created_at'].notna().sum()
     total_closed = issues_df['closed_at'].notna().sum()
 
-    results = {}
+    results = {
+        'trend_opened': {},
+        'trend_closed': {},
+        'backlog': {},
+        'open_by': {},
+        'close_by': {},
+        'time_to_answer': {},
+        'time_to_close': {},
+        'opened_last': {},
+        'closed_last': {},
+        'opened_prev': {},
+        'closed_prev': {}
+    }
+
     for period in ['day', 'week', 'month']:
         (last_start, last_end), (prev_start, prev_end) = get_periods(period)
-        results[f"{period}_opened_last"] = count_by_period(issues_df, 'created_at', last_start, last_end)
-        results[f"{period}_opened_prev"] = count_by_period(issues_df, 'created_at', prev_start, prev_end)
-        results[f"{period}_closed_last"] = count_by_period(issues_df, 'closed_at', last_start, last_end)
-        results[f"{period}_closed_prev"] = count_by_period(issues_df, 'closed_at', prev_start, prev_end)
+        results["opened_last"][period] = count_by_period(issues_df, 'created_at', last_start, last_end)
+        results["opened_prev"][period] = count_by_period(issues_df, 'created_at', prev_start, prev_end)
+        results["closed_last"][period] = count_by_period(issues_df, 'closed_at', last_start, last_end)
+        results["closed_prev"][period] = count_by_period(issues_df, 'closed_at', prev_start, prev_end)
 
-    results['trend_opened_day'] = safe_divide(results['day_opened_last'], results['day_opened_prev'], 2) - 1
-    results['trend_opened_week'] = safe_divide(results['week_opened_last'], results['week_opened_prev'], 2) - 1
-    results['trend_opened_month'] = safe_divide(results['month_opened_last'], results['month_opened_prev'], 2) - 1
+    results['trend_opened']['day'] = safe_divide(results['opened_last']['day'], results['opened_prev']['day'], 2) - 1
+    results['trend_opened']['week'] = safe_divide(results['opened_last']['week'], results['opened_prev']['week'], 2) - 1
+    results['trend_opened']['month'] = safe_divide(results['opened_last']['month'], results['opened_prev']['month'], 2) - 1
 
-    results['trend_closed_day'] = safe_divide(results['day_closed_last'], results['day_closed_prev'], 2) - 1
-    results['trend_closed_week'] = safe_divide(results['week_closed_last'], results['week_closed_prev'], 2) - 1
-    results['trend_closed_month'] = safe_divide(results['month_closed_last'], results['month_closed_prev'], 2) - 1
+    results['trend_closed']['day'] = safe_divide(results['closed_last']['day'], results['closed_prev']['day'], 2) - 1
+    results['trend_closed']['week'] = safe_divide(results['closed_last']['week'], results['closed_prev']['week'], 2) - 1
+    results['trend_closed']['month'] = safe_divide(results['closed_last']['month'], results['closed_prev']['month'], 2) - 1
 
     day_points = [
         datetime.combine((now.date() - timedelta(days=delta)), datetime.max.time(), tzinfo=timezone.utc)
@@ -85,9 +98,9 @@ def processProductivityIS(org_name: str, repo_name: str) -> None:
             ((issues_df['closed_at'].isna()) | (issues_df['closed_at'] > ts))
         ].shape[0]
 
-    results['backlog_days'] = [{"y": backlog_size(ts), "x": ts.strftime("%Y-%m-%d")} for ts in day_points]
-    results['backlog_weeks'] = [{"y": backlog_size(ts), "x": ts.strftime("%Y-%m-%d")} for ts in week_points]
-    results['backlog_months'] = [{"y": backlog_size(ts), "x": ts.strftime("%Y-%m")} for ts in month_points]
+    results['backlog']['day'] = [{"y": backlog_size(ts), "x": ts.strftime("%Y-%m-%d")} for ts in day_points]
+    results['backlog']['week'] = [{"y": backlog_size(ts), "x": ts.strftime("%Y-%m-%d")} for ts in week_points]
+    results['backlog']['month'] = [{"y": backlog_size(ts), "x": ts.strftime("%Y-%m")} for ts in month_points]
 
     open_by_day = []
     for delta in range(1, 30):
@@ -111,9 +124,9 @@ def processProductivityIS(org_name: str, repo_name: str) -> None:
         mask = (issues_df['created_at'] >= month_start) & (issues_df['created_at'] <= month_end)
         open_by_month.append({"y": issues_df[mask].shape[0], "x": month_start.strftime("%Y-%m")})
 
-    results['open_by_day'] = open_by_day[::-1]
-    results['open_by_week'] = open_by_week
-    results['open_by_month'] = open_by_month
+    results['open_by']['day'] = open_by_day[::-1]
+    results['open_by']['week'] = open_by_week
+    results['open_by']['month'] = open_by_month
 
     close_by_day = []
     for delta in range(1, 30):
@@ -137,9 +150,9 @@ def processProductivityIS(org_name: str, repo_name: str) -> None:
         mask = (issues_df['closed_at'] >= month_start) & (issues_df['closed_at'] <= month_end)
         close_by_month.append({"y": issues_df[mask].shape[0], "x": month_start.strftime("%Y-%m")})
 
-    results['close_by_day'] = close_by_day[::-1]
-    results['close_by_week'] = close_by_week
-    results['close_by_month'] = close_by_month
+    results['close_by']['day'] = close_by_day[::-1]
+    results['close_by']['week'] = close_by_week
+    results['close_by']['month'] = close_by_month
 
     first_answer_times = []
     issues_df['created_at'] = pd.to_datetime(issues_df['created_at'], utc=True, errors='coerce')
@@ -179,17 +192,17 @@ def processProductivityIS(org_name: str, repo_name: str) -> None:
     time_to_answer_day = list()
     for c, value in enumerate(avg_day):
         time_to_answer_day.append({"y": value, "x": day_points[c].strftime("%Y-%m-%d")})
-    results['time_to_answer_day'] = time_to_answer_day
+    results['time_to_answer']['day'] = time_to_answer_day
 
     time_to_answer_week = list()
     for c, value in enumerate(avg_week):
         time_to_answer_week.append({"y": value, "x": week_points[c].strftime("%Y-%m-%d")})
-    results['time_to_answer_week'] = time_to_answer_week
+    results['time_to_answer']['week'] = time_to_answer_week
 
     time_to_answer_month = list()
     for c, value in enumerate(avg_month):
         time_to_answer_month.append({"y": value, "x": month_points[c].strftime("%Y-%m-%d")})
-    results['time_to_answer_month'] = time_to_answer_month
+    results['time_to_answer']['month'] = time_to_answer_month
 
     time_to_close_times = []
     for idx, iss in issues_df.iterrows():
@@ -215,13 +228,13 @@ def processProductivityIS(org_name: str, repo_name: str) -> None:
     avg_close_month = [0 if (isinstance(x, float) and math.isnan(x)) else round(x, 2) for x in avg_close_month]
 
     time_to_close_day = [{"y": v, "x": day_points[c].strftime("%Y-%m-%d")} for c, v in enumerate(avg_close_day)]
-    results['time_to_close_day'] = time_to_close_day
+    results['time_to_close']['day'] = time_to_close_day
 
     time_to_close_week = [{"y": v, "x": week_points[c].strftime("%Y-%m-%d")} for c, v in enumerate(avg_close_week)]
-    results['time_to_close_week'] = time_to_close_week
+    results['time_to_close']['week'] = time_to_close_week
 
     time_to_close_month = [{"y": v, "x": month_points[c].strftime("%Y-%m")} for c, v in enumerate(avg_close_month)]
-    results['time_to_close_month'] = time_to_close_month
+    results['time_to_close']['month'] = time_to_close_month
 
     out_dir = Path(__file__).resolve().parents[2] / "./metrics"
     out_dir.mkdir(exist_ok=True)

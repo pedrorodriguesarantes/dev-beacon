@@ -49,23 +49,23 @@
         <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <MetricCard
             title="Total Opened PRs"
-            :value="pullRequestData[`${frameLocal}_opened_last`] ?? 0"
-            :trend="pullRequestData[`trend_opened_${frameLocal}`] ?? 0"
-            :valueBefore="pullRequestData[`${frameLocal}_opened_prev`]"
+            :value="pullRequestData?.opened_last?.[frameLocal] ?? 0"
+            :trend="pullRequestData?.trend_opened?.[frameLocal] ?? 0"
+            :valueBefore="pullRequestData?.opened_prev?.[frameLocal] ?? 0"
           />
 
           <MetricCard
             title="Total Closed PRs"
-            :value="pullRequestData[`${frameLocal}_closed_last`] ?? 0"
-            :trend="pullRequestData[`trend_closed_${frameLocal}`] ?? 0"
-            :valueBefore="pullRequestData[`${frameLocal}_closed_prev`]"
+            :value="pullRequestData?.closed_last?.[frameLocal] ?? 0"
+            :trend="pullRequestData?.trend_closed?.[frameLocal] ?? 0"
+            :valueBefore="pullRequestData?.closed_prev?.[frameLocal] ?? 0"
           />
 
           <MetricCard
             title="Total Merged PRs"
-            :value="pullRequestData[`${frameLocal}_merged_last`] ?? 0"
-            :trend="pullRequestData[`trend_merged_${frameLocal}`] ?? 0"
-            :valueBefore="pullRequestData[`${frameLocal}_merged_prev`]"
+            :value="pullRequestData?.merged_last?.[frameLocal] ?? 0"
+            :trend="pullRequestData?.trend_merged?.[frameLocal] ?? 0"
+            :valueBefore="pullRequestData?.merged_prev?.[frameLocal] ?? 0"
           />
         </div>
 
@@ -73,36 +73,36 @@
         <div class="bg-white rounded-2xl p-4 shadow">
           <h3 class="font-semibold text-gray-700">Pull Request Backlog Size</h3>
           <TimeframeToggle v-model="frameLocal" />
-          <LineChart :series="pullRequestData[`backlog_${frameLocal}s`]" />
+          <LineChart :series="pullRequestData?.backlog?.[frameLocal] ?? []" />
         </div>
 
         <!-- ───────  FOUR AREA CHARTS ─────── -->
         <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-2">
           <LineAreaCard
             :title="`Opening Pull Request Rate (${frameLocal})`"
-            :series="pullRequestData[`open_by_${frameLocal}`]"
+            :series="pullRequestData?.open_by?.[frameLocal] ?? []"
           />
 
           <LineAreaCard
             :title="`Closing Pull Request Rate (${frameLocal})`"
-            :series="pullRequestData[`close_by_${frameLocal}`]"
+            :series="pullRequestData?.close_by?.[frameLocal] ?? []"
           />
 
           <LineAreaCard
-            :title="`Time for First Answer (${frameLocal}${frameLocal === 'day' ? ') (Δ hours)' : ') (Δ days)'}`"
-            :series="pullRequestData[`close_by_${frameLocal}`]"
+            :title="`Time for First Answer (${frameLocal}${timeUnit})`"
+            :series="pullRequestData?.time_to_answer?.[frameLocal] ?? []"
           />
 
           <LineAreaCard
-            :title="`Time for Closing (${frameLocal}${frameLocal === 'day' ? ') (Δ hours)' : ') (Δ days)'}`"
-            :series="pullRequestData[`time_to_close_${frameLocal}`]"
+            :title="`Time for Closing (${frameLocal}${timeUnit})`"
+            :series="pullRequestData?.time_to_close?.[frameLocal] ?? []"
           />
         </div>
 
         <div class="bg-white rounded-2xl p-4 shadow">
           <h3 class="font-semibold text-gray-700">Merge Rate (%)</h3>
           <TimeframeToggle v-model="frameLocal" />
-          <LineChart :series="pullRequestData[`merge_rate_by_${frameLocal}`]" />
+          <LineChart :series="pullRequestData?.merge_rate?.[frameLocal] ?? []" />
         </div>
       </section>
         
@@ -114,55 +114,66 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import axios from 'axios';
 
 import MenuCard from '@/components/MenuCard.vue';
 import MetricCard from '@/components/MetricCard.vue';
-// import TimeframeToggle from '@/components/TimeframeToggle.vue';
-// import LabelBarCard from '@/components/LabelBarCard.vue';
 import LineChart from '@/components/LineChart.vue';
 import LineAreaCard from '@/components/LineAreaCard.vue';
 
 const route = useRoute();
 const owner = route.params.owner;
-const repo  = route.params.repo;
-
-const repositories = ref([]);
-const projectInfo = computed(() => {
-  if (!owner || !repo) return null;
-  return repositories.value.find(p => {
-    return (
-      (p.github && p.github.includes(`${owner}/${repo}`)) ||
-      (p.owner === owner && p.repo === repo)
-    );
-  });
-});
+const repo = route.params.repo;
 
 const frameLocal = ref('month');
-
-// ────────── Initialize pullRequestData with an empty object
 const pullRequestData = ref({});
+const repositories = ref([]);
 const initialized = ref(false);
 
-onMounted(async () => {
-  try {
-    // const response = await axios.get(`https://raw.githubusercontent.com/pedrorodriguesarantes/dev-beacon/main/metrics/${owner.toLowerCase()}/${repo.toLowerCase()}/pullRequestAnalysis.json`);
-    const response = await axios.get('/pullRequestAnalysis.json');
-    pullRequestData.value = response.data;
+const projectInfo = computed(() => {
+  if (!owner || !repo) return null;
+  return repositories.value.find(
+    p =>
+      (p.github && p.github.includes(`${owner}/${repo}`)) ||
+      (p.owner === owner && p.repo === repo)
+  );
+});
 
-    const res = await fetch('/repositories.json');
-    repositories.value = await res.json();
-  } catch (e) {
-    console.error('Failed to load pull-request data:', e);
+const timeUnit = computed(() =>
+  frameLocal.value === 'day' ? ') (Δ hours)' : ') (Δ days)'
+);
+
+onMounted(async () => {
+  initialized.value = false;
+  try {
+    const [pullRequestRes, reposRes] = await Promise.all([
+      axios.get(
+        // swap this to your real path when you move back to GitHub-hosted JSON
+        '/pullRequestAnalysis.json'
+      ),
+      fetch('/repositories.json')
+    ]);
+
+    pullRequestData.value = pullRequestRes.data ?? {};
+    repositories.value = (await reposRes.json()) ?? [];
+  } catch (err) {
+    console.error('❌ Failed loading dashboard data:', err);
   } finally {
     initialized.value = true;
   }
 });
 
+/* Optional: reset timeframe to 'month' when switching repos */
+watch(
+  () => route.fullPath,
+  () => {
+    frameLocal.value = 'month';
+  }
+);
 </script>
 
 <style scoped>
-/* Tailwind handles all visuals */
+/* Tailwind handles the look & feel */
 </style>

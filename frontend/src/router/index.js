@@ -6,6 +6,7 @@ import PullRequestDashboard from '@/views/PullRequestDashboard.vue';
 import NewcomersDashboard from '@/views/NewcomersDashboard.vue';
 import EngagementDashboard from '@/views/EngagementDashboard.vue';
 import CustomDashboardBuilder from '@/views/CustomDashboardBuilder.vue';
+import SavedDashboard from '@/views/SavedDashboard.vue';
 // import more dashboards here...
 
 const routes = [
@@ -38,6 +39,12 @@ const routes = [
     path: '/repos/:owner/:repo/builder',
     name: 'custom-dashboard',
     component: CustomDashboardBuilder,
+    props: true
+  },
+  {
+    path : '/repos/:owner/:repo/saved/:id',
+    name : 'SavedDashboard',
+    component : SavedDashboard,
     props: true
   }
   // add more dashboards here as needed
